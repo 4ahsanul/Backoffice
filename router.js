@@ -532,6 +532,88 @@ router.put('/patient/:patientId', patientValidation, (req, res) => {
     )
 })
 
+// LIST PATIENT
+router.get('/patient', (req, res) => {
+    const { page = 1 } = req.query;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    const id = uuid.v4();
+
+    new Promise((resolve, reject) => {
+        db.query('SELECT * FROM patient LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
+            if (error) {
+                reject({ error: true, message: 'Error fetching data' });
+            } else {
+                resolve(results);
+            }
+        });
+    })
+        .then((results) => {
+            // Count total rows in the table for pagination
+            return new Promise((resolve, reject) => {
+                db.query('SELECT COUNT(*) AS total_rows FROM patient', (countError, countResults) => {
+                    if (countError) {
+                        reject({ error: true, message: 'Error fetching count' });
+                    } else {
+                        resolve({ results, countResults });
+                    }
+                });
+            });
+        })
+        .then(({ results, countResults }) => {
+            const totalRows = countResults[0].total_rows;
+            const lastPage = Math.ceil(totalRows / limit);
+            const actualPageSize = results.length;
+
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'get_list_patient')`
+            );
+
+            return res.status(200).json({
+                header: {
+                    status: 'OK',
+                    message: 'Fetch Successfully.',
+                    status_code: 200,
+                    error_code: null,
+                    trace_id: id,
+                },
+                data: {
+                    total: totalRows,
+                    per_page: actualPageSize,
+                    page: page,
+                    last_page: lastPage,
+                    data: results
+                }
+            });
+        })
+        .catch((error) => {
+            res.status(500).json(error);
+        });
+})
+
+
 // Function to generate medical record number
 function generateMedicalRecordNumber() {
     const nextMedicalRecordNumber = getNextMedicalRecordNumber();
