@@ -11,7 +11,7 @@ const bodyParser = require('body-parser');
 router.use(bodyParser.json());
 
 // ===== AUTHENTICATION LOGIN =====
-// REGISTER FIRST
+// REGISTER FIRST OKAY TO USE FORM
 router.post('/register', registerValidation, (req, res, next) => {
     // UUID
     const id = uuid.v4();
@@ -165,6 +165,8 @@ router.post('/icd', ICDValidation, (req, res, next) => {
 
     // If the token is valid, you can proceed with the ICD data validation and insertion
     const id = uuid.v4();
+    const jsonData = req.body;
+    console.log('Received JSON:', jsonData);
 
     // ICD data validation (you can replace this with your specific validation)
     const {icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type} = req.body;
