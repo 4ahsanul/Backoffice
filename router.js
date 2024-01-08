@@ -162,11 +162,11 @@ router.post('/icd', ICDValidation, (req, res, next) => {
     const id = uuid.v4();
 
     // ICD data validation (you can replace this with your specific validation)
-    const {icd_tens_name_english, icd_tens_name_bahasa} = req.body;
+    const {icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type} = req.body;
 
     // Insert the ICD data into the database
-    const icd_tens_code = req.body.icd_tens_code || '';
-    const icd_tens_type = req.body.icd_tens_type || '';
+    // const icd_tens_code = req.body.icd_tens_code || '';
+    // const icd_tens_type = req.body.icd_tens_type || '';
 
     db.query(
         `INSERT INTO icd_tens (id, icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type) VALUES ('${id}', ${db.escape(icd_tens_name_english)}, ${db.escape(icd_tens_name_bahasa)}, ${db.escape(icd_tens_code)}, ${db.escape(icd_tens_type)})`,
