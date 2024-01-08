@@ -9,7 +9,7 @@ const uuid = require('uuid');
 
 // AUTHENTICATION LOGIN
 // REGISTER FIRST
-router.post('/register', signupValidation, (req, res, next) => {
+router.post('/register', registerValidation, (req, res, next) => {
     // UUID
     const id = uuid.v4();
 
@@ -51,3 +51,5 @@ router.post('/register', signupValidation, (req, res, next) => {
         }
     )
 })
+
+module.exports = router;
