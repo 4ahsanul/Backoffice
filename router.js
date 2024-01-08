@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('./dbConnection');
-const {registerValidation, loginValidation} = require('./validation');
+const {registerValidation, loginValidation, insertICDValidation, ICDValidation} = require('./validation');
 const {validationResult} = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -134,5 +134,56 @@ router.post('/login', loginValidation, (req, res,) => {
 });
 
 // ===== END OF AUTHENTICATION PART =====
+
+// ===== MASTER DATA =====
+// INSERT ICD TENS
+router.post('/icd', ICDValidation, (req, res, next) => {
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    // If the token is valid, you can proceed with the ICD data validation and insertion
+    const id = uuid.v4();
+
+    // ICD data validation (you can replace this with your specific validation)
+    const {icd_tens_name_english, icd_tens_name_bahasa} = req.body;
+
+    // Insert the ICD data into the database
+    const icd_tens_code = req.body.icd_tens_code || '';
+    const icd_tens_type = req.body.icd_tens_type || '';
+
+    db.query(
+        `INSERT INTO icd_tens (id, icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type) VALUES ('${id}', ${db.escape(icd_tens_name_english)}, ${db.escape(icd_tens_name_bahasa)}, ${db.escape(icd_tens_code)}, ${db.escape(icd_tens_type)})`,
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({
+                    msg: err
+                });
+            }
+
+            return res.status(201).json({
+                msg: 'The ICD Tens has been registered successfully!',
+                data: result[0]
+            });
+        }
+    );
+});
+
 
 module.exports = router;
