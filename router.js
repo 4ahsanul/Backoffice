@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('./dbConnection');
-const {registerValidation, loginValidation, insertICDValidation, ICDValidation} = require('./validation');
+const {registerValidation, loginValidation, insertICDValidation, ICDValidation, patientValidation} = require('./validation');
 const {validationResult} = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -222,7 +222,7 @@ router.post('/icd', ICDValidation, (req, res, next) => {
     );
 });
 
-// UPSERT ICD TENS
+// UPDATE ICD TENS
 router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
     if (
         !req.headers.authorization ||
@@ -384,5 +384,92 @@ router.get('/icd', (req, res,) => {
 })
 // ===== END OF MASTER DATA ICD PART =====
 
+// INSERT PATIENT
+router.post('/patient', patientValidation, (req, res) => {
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    // If the token is valid, you can proceed with the ICD data validation and insertion
+    const id = uuid.v4();
+    const jsonData = req.body;
+    console.log('Received JSON:', jsonData);
+
+    // Generate a default value for patient_medical_record_number
+    const patientMedicalRecordNumber = generateMedicalRecordNumber();
+
+    // Patient data validation
+    const {patient_name, patient_birthdate, patient_nik} = req.body;
+
+    // Insert the ICD data into the database
+    db.query(
+        `INSERT INTO patient (id, patient_medical_record_number, patient_name, patient_birthdate, patient_nik) VALUES ('${id}', '${patientMedicalRecordNumber}', ${db.escape(patient_name)}, ${db.escape(patient_birthdate)}, ${db.escape(patient_nik)})`,
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({
+                    header: {
+                        status: 'FAILED',
+                        message: 'Error registering Patient',
+                        status_code: 500,
+                        error_code: err.code || null,
+                    },
+                    data: null,
+                });
+            }
+
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'insert_patient')`
+            );
+
+            const insertedPatient = {
+                icd_tens_id: id,
+                patient_medical_record_number: patientMedicalRecordNumber,
+                patient_name,
+                patient_birthdate,
+                patient_nik
+            };
+
+            return res.status(201).json({
+                header: {
+                    status: 'OK',
+                    message: 'Patient has been registered successfully!',
+                    status_code: 201,
+                    error_code: null,
+                    trace_id: id,
+                },
+                data: insertedPatient,
+            });
+        }
+    );
+});
+
+// Function to generate medical record number
+function generateMedicalRecordNumber() {
+    const nextMedicalRecordNumber = getNextMedicalRecordNumber();
+    return nextMedicalRecordNumber.toString().padStart(6, '0');
+}
+
+let medicalRecordCounter = 1; // Initial value
+
+function getNextMedicalRecordNumber() {
+    return medicalRecordCounter++;
+}
 
 module.exports = router;
