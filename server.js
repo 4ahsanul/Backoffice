@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({
 
 app.use(cors());
 
-app.use('/api', indexRouter);
+app.use('/v1', indexRouter);
 
 // Handling Errors
 app.use((err, req, res, next) => {
