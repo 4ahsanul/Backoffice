@@ -176,7 +176,7 @@ router.post('/icd', ICDValidation, (req, res, next) => {
     const jsonData = req.body;
     console.log('Received JSON:', jsonData);
 
-    // ICD data validation (you can replace this with your specific validation)
+    // ICD data validation
     const {icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type} = req.body;
 
     // Insert the ICD data into the database
@@ -221,6 +221,86 @@ router.post('/icd', ICDValidation, (req, res, next) => {
         }
     );
 });
+
+// UPSERT ICD TENS
+router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    // If the token is valid, you can proceed with the ICD data validation and update
+    const icdId = req.params.icdId; // Extract ICD ID from the URL parameter
+    const jsonData = req.body;
+    console.log('Received JSON:', jsonData);
+
+    // ICD data validation
+    const {icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type} = req.body;
+
+    // Update the ICD data in the database
+    db.query(
+        `UPDATE icd_tens 
+         SET 
+            icd_tens_name_english = ${db.escape(icd_tens_name_english)},
+            icd_tens_name_bahasa = ${db.escape(icd_tens_name_bahasa)},
+            icd_tens_code = ${db.escape(icd_tens_code)},
+            icd_tens_type = ${db.escape(icd_tens_type)}
+         WHERE id = '${icdId}'`,
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({
+                    header: {
+                        status: 'FAILED',
+                        message: 'Error updating ICD Tens',
+                        status_code: 500,
+                        error_code: err.code || null,
+                    },
+                    data: null,
+                });
+            }
+
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${uuid.v4()}', '${decoded.id}', '${theToken}', NOW(), 'update_icd')`
+            );
+
+            const updatedICD = {
+                icd_tens_id: icdId,
+                icd_tens_name_english,
+                icd_tens_name_bahasa,
+                icd_tens_code,
+                icd_tens_type,
+            };
+
+            return res.status(200).json({
+                header: {
+                    status: 'OK',
+                    message: 'The ICD Tens has been updated successfully!',
+                    status_code: 200,
+                    error_code: null,
+                    trace_id: uuid.v4(),
+                },
+                data: updatedICD,
+            });
+        }
+    )
+})
+// ===== END OF MASTER DATA ICD PART =====
 
 
 module.exports = router;
