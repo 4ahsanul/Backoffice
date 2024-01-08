@@ -382,7 +382,7 @@ router.get('/icd', (req, res,) => {
             res.status(500).json(error);
         });
 })
-// ===== END OF MASTER DATA ICD PART =====
+// ===== END OF DATA ICD PART =====
 
 // INSERT PATIENT
 router.post('/patient', patientValidation, (req, res) => {
@@ -459,6 +459,78 @@ router.post('/patient', patientValidation, (req, res) => {
         }
     );
 });
+
+// UPDATE PATIENT
+router.put('/patient/:patientId', patientValidation, (req, res) => {
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const id = uuid.v4();
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    // If the token is valid, you can proceed with the ICD data validation and update
+    const patientId  = req.params.patientId; // Extract ICD ID from the URL parameter
+    const jsonData = req.body;
+
+    // Patient data validation
+    const {patient_name, patient_birthdate, patient_nik} = req.body;
+
+    // Update the patient record in the database
+    db.query(
+        `UPDATE patient SET patient_name = ${db.escape(patient_name)}, patient_birthdate = ${db.escape(patient_birthdate)}, patient_nik = ${db.escape(patient_nik)} WHERE id = '${patientId}'`,
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({
+                    header: {
+                        status: 'FAILED',
+                        message: 'Error updating Patient',
+                        status_code: 500,
+                        error_code: err.code || null,
+                    },
+                    data: null,
+                });
+            }
+
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'update_patient')`
+            );
+
+            const updatedPatient = {
+                patient_id: patientId,
+                patient_name,
+                patient_birthdate,
+                patient_nik
+            };
+
+            return res.status(200).json({
+                header: {
+                    status: 'OK',
+                    message: 'Patient has been updated successfully!',
+                    status_code: 200,
+                    error_code: null,
+                    trace_id: id
+                },
+                data: updatedPatient,
+            });
+        }
+    )
+})
 
 // Function to generate medical record number
 function generateMedicalRecordNumber() {
