@@ -300,6 +300,59 @@ router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
         }
     )
 })
+
+// LIST ICD TENS
+router.get('/icd', (req, res,) => {
+    const { page = 1 } = req.query;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    new Promise((resolve, reject) => {
+        db.query('SELECT * FROM icd_tens LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
+            if (error) {
+                reject({ error: true, message: 'Error fetching data' });
+            } else {
+                resolve(results);
+            }
+        });
+    })
+        .then((results) => {
+            // Count total rows in the table for pagination
+            return new Promise((resolve, reject) => {
+                db.query('SELECT COUNT(*) AS total_rows FROM icd_tens', (countError, countResults) => {
+                    if (countError) {
+                        reject({ error: true, message: 'Error fetching count' });
+                    } else {
+                        resolve({ results, countResults });
+                    }
+                });
+            });
+        })
+        .then(({ results, countResults }) => {
+            const totalRows = countResults[0].total_rows;
+            const lastPage = Math.ceil(totalRows / limit);
+            const actualPageSize = results.length;
+
+            res.json({
+                header: {
+                    status: 'OK',
+                    message: 'Fetch Successfully.',
+                    status_code: 200,
+                    error_code: null,
+                },
+                data: {
+                    total: totalRows,
+                    per_page: actualPageSize,
+                    page: page,
+                    last_page: lastPage,
+                    data: results
+                }
+            });
+        })
+        .catch((error) => {
+            res.status(500).json(error);
+        });
+})
 // ===== END OF MASTER DATA ICD PART =====
 
 
