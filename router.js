@@ -195,6 +195,11 @@ router.post('/icd', ICDValidation, (req, res, next) => {
                 });
             }
 
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'insert_icd')`
+            );
+
             const insertedICD = {
                 icd_tens_id: id,
                 icd_tens_name_english,
@@ -209,6 +214,7 @@ router.post('/icd', ICDValidation, (req, res, next) => {
                     message: 'The ICD Tens has been registered successfully!',
                     status_code: 201,
                     error_code: null,
+                    trace_id: id,
                 },
                 data: insertedICD,
             });
