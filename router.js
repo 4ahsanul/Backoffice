@@ -177,13 +177,32 @@ router.post('/icd', ICDValidation, (req, res, next) => {
         (err, result) => {
             if (err) {
                 return res.status(500).json({
-                    msg: err
+                    header: {
+                        status: 'FAILED',
+                        message: 'Error registering ICD Tens',
+                        status_code: 500,
+                        error_code: err.code || null,
+                    },
+                    data: null,
                 });
             }
 
+            const insertedICD = {
+                icd_tens_id: id,
+                icd_tens_name_english,
+                icd_tens_name_bahasa,
+                icd_tens_code,
+                icd_tens_type,
+            };
+
             return res.status(201).json({
-                msg: 'The ICD Tens has been registered successfully!',
-                data: result[0]
+                header: {
+                    status: 'OK',
+                    message: 'The ICD Tens has been registered successfully!',
+                    status_code: 201,
+                    error_code: null,
+                },
+                data: insertedICD,
             });
         }
     );
