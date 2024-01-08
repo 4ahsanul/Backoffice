@@ -65,13 +65,14 @@ router.post('/login', loginValidation, (req, res,) => {
         `SELECT * FROM users WHERE username = ${db.escape(jsonData.username)};`,
         (err, result) => {
             // User doesn't exist
-            if (err) {
-                return res.status(400).send({
+            if (err || result.length === 0) {
+                return res.status(400).json({
                     header: {
-                        status: 'FAILED',
-                        message: 'Bad Request',
+                        status: "FAILED",
+                        message: "Bad Request",
                         status_code: 400,
-                        error_code: null,
+                        error_code: err ? err.code || null : null,
+                        trace_id: id
                     },
                     data: null
                 });
@@ -89,7 +90,7 @@ router.post('/login', loginValidation, (req, res,) => {
                                 status: 'FAILED',
                                 message: 'Unauthorized',
                                 status_code: 401,
-                                error_code: null,
+                                error_code: bErr.code || null,
                             },
                             data: null
                         });
@@ -116,7 +117,7 @@ router.post('/login', loginValidation, (req, res,) => {
                                 msg: 'Logged in!',
                                 status_code: 200,
                                 error_code: null,
-                                trace_id: result[0].trace_id
+                                trace_id: id,
                             },
                             data: {
                                 username: result[0].name,
@@ -129,8 +130,15 @@ router.post('/login', loginValidation, (req, res,) => {
                             },
                         });
                     }
-                    return res.status(401).send({
-                        msg: 'Username or password is incorrect!'
+                    return res.status(401).json({
+                        header: {
+                            status: 'FAILED',
+                            message: 'Unauthorized',
+                            status_code: 401,
+                            error_code: null,
+                            trace_id: id,
+                        },
+                        data: null,
                     });
                 }
             );
