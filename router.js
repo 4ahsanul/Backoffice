@@ -6,6 +6,9 @@ const {validationResult} = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const uuid = require('uuid');
+const bodyParser = require('body-parser');
+
+router.use(bodyParser.json());
 
 // ===== AUTHENTICATION LOGIN =====
 // REGISTER FIRST
@@ -55,9 +58,11 @@ router.post('/register', registerValidation, (req, res, next) => {
 // LOGIN
 router.post('/login', loginValidation, (req, res,) => {
     const id = uuid.v4();
+    const jsonData = req.body;
+    console.log('Received JSON:', jsonData);
 
     db.query(
-        `SELECT * FROM users WHERE username = ${db.escape(req.body.username)};`,
+        `SELECT * FROM users WHERE username = ${db.escape(jsonData.username)};`,
         (err, result) => {
             // User doesn't exist
             if (err) {
@@ -74,7 +79,7 @@ router.post('/login', loginValidation, (req, res,) => {
 
             // Check Password
             bcrypt.compare(
-                req.body.password,
+                jsonData.password,
                 result[0]['password'],
                 (bErr, bResult) => {
                     if (bErr) {
@@ -165,9 +170,6 @@ router.post('/icd', ICDValidation, (req, res, next) => {
     const {icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type} = req.body;
 
     // Insert the ICD data into the database
-    // const icd_tens_code = req.body.icd_tens_code || '';
-    // const icd_tens_type = req.body.icd_tens_type || '';
-
     db.query(
         `INSERT INTO icd_tens (id, icd_tens_name_english, icd_tens_name_bahasa, icd_tens_code, icd_tens_type) VALUES ('${id}', ${db.escape(icd_tens_name_english)}, ${db.escape(icd_tens_name_bahasa)}, ${db.escape(icd_tens_code)}, ${db.escape(icd_tens_type)})`,
         (err, result) => {
