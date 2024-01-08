@@ -277,7 +277,7 @@ router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
 
             // Insert user log to trace
             db.query(
-                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${uuid.v4()}', '${decoded.id}', '${theToken}', NOW(), 'update_icd')`
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'update_icd')`
             );
 
             const updatedICD = {
