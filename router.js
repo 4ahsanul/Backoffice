@@ -234,6 +234,7 @@ router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
         });
     }
 
+    const id = uuid.v4();
     const theToken = req.headers.authorization.split(' ')[1];
     let decoded;
     try {
@@ -293,7 +294,7 @@ router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
                     message: 'The ICD Tens has been updated successfully!',
                     status_code: 200,
                     error_code: null,
-                    trace_id: uuid.v4(),
+                    trace_id: id,
                 },
                 data: updatedICD,
             });
@@ -306,6 +307,28 @@ router.get('/icd', (req, res,) => {
     const { page = 1 } = req.query;
     const limit = 10;
     const offset = (page - 1) * limit;
+
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    const id = uuid.v4();
 
     new Promise((resolve, reject) => {
         db.query('SELECT * FROM icd_tens LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
@@ -333,12 +356,18 @@ router.get('/icd', (req, res,) => {
             const lastPage = Math.ceil(totalRows / limit);
             const actualPageSize = results.length;
 
-            res.json({
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'get_list_icd')`
+            );
+
+            return res.status(200).json({
                 header: {
                     status: 'OK',
                     message: 'Fetch Successfully.',
                     status_code: 200,
                     error_code: null,
+                    trace_id: id,
                 },
                 data: {
                     total: totalRows,
