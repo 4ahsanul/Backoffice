@@ -787,58 +787,40 @@ router.put('/update_pre_assessment/:pre_assessment_id', assessmentValidation, (r
                 });
             }
 
+            // Process each JSON object in the array and insert new icd_tens_detail records
+            for (const jsonObject of jsonData.icd_tens_id) {
+                const icd_tens_detail_id = uuid.v4();
+                db.query(
+                    `INSERT INTO icd_tens_detail (id, pre_assessment_id, icd_tens_id) VALUES ('${icd_tens_detail_id}', '${preAssessmentId}', '${jsonObject}')`
+                );
+            }
+
+            // Insert user log to trace
+            const id = uuid.v4();
             db.query(
-                `DELETE FROM icd_tens_detail WHERE pre_assessment_id='${preAssessmentId}'`,
-                (deleteErr, deleteResult) => {
-                    if (deleteErr) {
-                        // Handle deletion error
-                        return res.status(500).json({
-                            header: {
-                                status: 'FAILED',
-                                message: 'Error updating Pre-Assessment',
-                                status_code: 500,
-                                error_code: deleteErr.code || null,
-                            },
-                            data: null,
-                        });
-                    }
-
-                    // Process each JSON object in the array and insert new icd_tens_detail records
-                    for (const jsonObject of jsonData.icd_tens_id) {
-                        const icd_tens_detail_id = uuid.v4();
-                        db.query(
-                            `INSERT INTO icd_tens_detail (id, pre_assessment_id, icd_tens_id) VALUES ('${icd_tens_detail_id}', '${preAssessmentId}', '${jsonObject}')`
-                        );
-                    }
-
-                    // Insert user log to trace
-                    const id = uuid.v4();
-                    db.query(
-                        `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'update_pre_assessment')`
-                    );
-
-                    const updatedPreAssessment = {
-                        pre_assessment_id: preAssessmentId,
-                        patient_id,
-                        icd_tens_id,
-                        subject_pre_assessment,
-                        object_pre_assessment,
-                        assessment_pre_assessment,
-                        plan_pre_assessment
-                    };
-
-                    return res.status(200).json({
-                        header: {
-                            status: 'OK',
-                            message: 'Pre-Assessment has been updated successfully!',
-                            status_code: 200,
-                            error_code: null,
-                            trace_id: id,
-                        },
-                        data: updatedPreAssessment,
-                    });
-                }
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'update_pre_assessment')`
             );
+
+            const updatedPreAssessment = {
+                pre_assessment_id: preAssessmentId,
+                patient_id,
+                icd_tens_id,
+                subject_pre_assessment,
+                object_pre_assessment,
+                assessment_pre_assessment,
+                plan_pre_assessment
+            };
+
+            return res.status(200).json({
+                header: {
+                    status: 'OK',
+                    message: 'Pre-Assessment has been updated successfully!',
+                    status_code: 200,
+                    error_code: null,
+                    trace_id: id,
+                },
+                data: updatedPreAssessment,
+            });
         }
     );
 });
