@@ -651,15 +651,7 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
     console.log('Received JSON:', jsonData);
 
     // Pre-assessment data validation
-    const {
-        patient_id,
-        icd_tens_id,
-        subject_pre_assessment,
-        object_pre_assessment,
-        assessment_pre_assessment,
-        plan_pre_assessment,
-        assessment_date
-    } = req.body;
+    const {patient_id} = req.body;
 
     // Handle validation errors
     const errors = validationResult(req);
@@ -706,12 +698,6 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
             const insertedPreAssessment = {
                 pre_assessment_id: pre_assessment_id,
                 patient_id,
-                icd_tens_id,
-                subject_pre_assessment,
-                object_pre_assessment,
-                assessment_pre_assessment,
-                plan_pre_assessment,
-                assessment_date
             };
 
             return res.status(201).json({
