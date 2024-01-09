@@ -743,14 +743,7 @@ router.put('/update_pre_assessment/:pre_assessment_id', assessmentValidation, (r
     console.log('Received JSON:', jsonData);
 
     // Pre-assessment data validation
-    const {
-        patient_id,
-        icd_tens_id,
-        subject_pre_assessment,
-        object_pre_assessment,
-        assessment_pre_assessment,
-        plan_pre_assessment
-    } = req.body;
+    const {patient_id} = req.body;
 
     // Handle validation errors
     const errors = validationResult(req);
@@ -761,7 +754,7 @@ router.put('/update_pre_assessment/:pre_assessment_id', assessmentValidation, (r
     }
 
     db.query(
-        `UPDATE pre_assessment SET patient_id='${jsonData.patient_id}', subject_pre_assessment='${jsonData.subject_pre_assessment}' WHERE id='${preAssessmentId}'`,
+        `UPDATE pre_assessment SET patient_id = '${jsonData.patient_id}', subject_pre_assessment = '${jsonData.subject_pre_assessment}', object_pre_assessment = '${jsonData.object_pre_assessment}', assessment_pre_assessment = '${jsonData.assessment_pre_assessment}', plan_pre_assessment = '${jsonData.plan_pre_assessment}', assessment_date = '${jsonData.assessment_date}' WHERE id = '${preAssessmentId}';`,
         (err, result) => {
             if (err) {
                 return res.status(500).json({
@@ -792,11 +785,6 @@ router.put('/update_pre_assessment/:pre_assessment_id', assessmentValidation, (r
             const updatedPreAssessment = {
                 pre_assessment_id: preAssessmentId,
                 patient_id,
-                icd_tens_id,
-                subject_pre_assessment,
-                object_pre_assessment,
-                assessment_pre_assessment,
-                plan_pre_assessment
             };
 
             return res.status(200).json({
