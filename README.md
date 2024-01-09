@@ -5,6 +5,11 @@
 This repository is created to fulfill the Coding Test requirements for the position of Staff IT - Backend Engineer at
 RSU Ananda Purwokerto.
 
+**Notes:**
+Given my limited experience with JavaScript, it's possible that the current code structure may not fully align with 
+established conventions for readability. Despite this, I aim to maintain a level of clarity in the code. I continue to 
+familiarize myself with best practices, with a commitment to improving code readability in future iterations.
+
 ## Position
 
 **Position:** Staff IT - Backend Engineer
