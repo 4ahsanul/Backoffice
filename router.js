@@ -4,7 +4,6 @@ const db = require('./dbConnection');
 const {
     registerValidation,
     loginValidation,
-    insertICDValidation,
     ICDValidation,
     patientValidation,
     assessmentValidation
