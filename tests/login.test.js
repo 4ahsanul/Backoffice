@@ -11,13 +11,10 @@ app.use('/', router);
 
 describe('Authentication API Tests', () => {
     test('should log in successfully with correct credentials', async () => {
-        // Assuming you have a test user in your database
         const testUser = {
             username: 'testuser',
-            password: 'testpassword', // Assuming you've hashed this password before storing it in the database
+            password: 'testpassword',
         };
-
-        // Insert the test user into the database before testing (if needed)
 
         // Log in with correct credentials
         const response = await request(app)
@@ -31,14 +28,13 @@ describe('Authentication API Tests', () => {
         expect(response.statusCode).toBe(200);
         expect(response.body.header.status).toBe('OK');
         expect(response.body.data.token).toBeDefined();
-        // Add more assertions based on your response structure
     });
 
     test('should return 401 for incorrect password', async () => {
         // Assuming you have a test user in your database
         const testUser = {
             username: 'testuser',
-            password: 'testpassword', // Assuming you've hashed this password before storing it in the database
+            password: 'testpassword',
         };
 
         // Log in with incorrect password
@@ -51,7 +47,6 @@ describe('Authentication API Tests', () => {
 
         expect(response.statusCode).toBe(401);
         expect(response.body.header.status).toBe('FAILED');
-        // Add more assertions based on your response structure
     });
 
     test('should return 400 for non-existing user', async () => {
@@ -65,6 +60,5 @@ describe('Authentication API Tests', () => {
 
         expect(response.statusCode).toBe(400);
         expect(response.body.header.status).toBe('FAILED');
-        // Add more assertions based on your response structure
     });
 });
