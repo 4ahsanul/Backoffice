@@ -844,7 +844,8 @@ router.get('/pre_assessment', (req, res,) => {
                           FROM icd_tens_detail
                           JOIN pre_assessment ON pre_assessment.id = icd_tens_detail.pre_assessment_id
                           JOIN patient ON patient.id = pre_assessment.patient_id
-                          JOIN icd_tens ON icd_tens.id = icd_tens_detail.icd_tens_id`, (error, results) => {
+                          JOIN icd_tens ON icd_tens.id = icd_tens_detail.icd_tens_id
+                          LIMIT ? OFFSET ?`, [limit, offset], (error, results) => {
                     if (error) {
                         reject({error: true, message: 'Error fetching data'});
                     } else {
