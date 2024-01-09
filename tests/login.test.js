@@ -3,7 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('bcryptjs');
 require('jsonwebtoken');
-const router = require('../router'); // Update this with the correct path to your router file
+const router = require('../router');
 const app = express();
 
 app.use(bodyParser.json());

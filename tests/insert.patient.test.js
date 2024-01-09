@@ -3,13 +3,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('jsonwebtoken');
 require('uuid');
-const router = require('../router'); // Update this with the correct path to your router file
+const router = require('../router');
 const app = express();
 
 app.use(bodyParser.json());
 app.use('/', router);
 
 describe('Patient Registration API Tests', () => {
+    // Change to valid token
     const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImI1NmQ1MWFkLTc2MjgtNDAyOS1hZWY3LTU0MTAzYTQ1YjlhZSIsImlhdCI6MTcwNDc4ODM3MSwiZXhwIjoxNzA0NzkxOTcxfQ.OVlm3FrafP_XAIaSiuFyoCYt4gYS8_YQ_sxOBKq_YtA';
 
     /* Still error because of the generateMedicalRecordNumber() function, so if
