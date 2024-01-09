@@ -37,6 +37,4 @@ describe('ICD Tens List API Tests', () => {
         expect(response.statusCode).toBe(401);
         expect(response.body.msg).toBe('Invalid token');
     });
-
-    // Add more test cases for different scenarios (e.g., pagination, empty result, database errors, etc.)
 });
