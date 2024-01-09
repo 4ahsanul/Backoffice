@@ -703,14 +703,14 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
 
 
             const insertedPreAssessment = {
-                 pre_assessment_id: pre_assessment_id,
-                 patient_id,
-                 icd_tens_id,
-                 subject_pre_assessment,
-                 object_pre_assessment,
-                 assessment_pre_assessment,
-                 plan_pre_assessment
-             };
+                pre_assessment_id: pre_assessment_id,
+                patient_id,
+                icd_tens_id,
+                subject_pre_assessment,
+                object_pre_assessment,
+                assessment_pre_assessment,
+                plan_pre_assessment
+            };
 
             return res.status(201).json({
                 header: {
@@ -823,6 +823,98 @@ router.put('/update_pre_assessment/:pre_assessment_id', assessmentValidation, (r
             });
         }
     );
+});
+
+router.get('/pre_assessment', (req, res,) => {
+    const {page = 1} = req.query;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    const id = uuid.v4();
+
+    new Promise((resolve, reject) => {
+        db.query('SELECT * FROM pre_assessment LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
+            if (error) {
+                reject({error: true, message: 'Error fetching data'});
+            } else {
+                resolve(results);
+            }
+        });
+    })
+        .then((results) => {
+            // Count total rows in the table for pagination
+            return new Promise((resolve, reject) => {
+                db.query(`SELECT pre_assessment.id, patient.patient_name, patient.patient_nik, pre_assessment.subject_pre_assessment, icd_tens.icd_tens_name_english 
+                          FROM icd_tens_detail
+                          JOIN pre_assessment ON pre_assessment.id = icd_tens_detail.pre_assessment_id
+                          JOIN patient ON patient.id = pre_assessment.patient_id
+                          JOIN icd_tens ON icd_tens.id = icd_tens_detail.icd_tens_id`, (error, results) => {
+                    if (error) {
+                        reject({error: true, message: 'Error fetching data'});
+                    } else {
+                        // Assuming you still want to get the total count of rows from the pre_assessment table
+                        db.query('SELECT COUNT(*) AS total_rows FROM pre_assessment', (countError, countResults) => {
+                            if (countError) {
+                                reject({error: true, message: 'Error fetching count'});
+                            } else {
+                                resolve({results, countResults});
+                            }
+                        });
+                    }
+                });
+
+            });
+        })
+        .then(({results, countResults}) => {
+            const totalRows = countResults[0].total_rows;
+            const lastPage = Math.ceil(totalRows / limit);
+            const actualPageSize = results.length;
+
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'get_list_assessment')`
+            );
+
+            return res.status(200).json({
+                header: {
+                    status: 'OK',
+                    message: 'Fetch Successfully.',
+                    status_code: 200,
+                    error_code: null,
+                    trace_id: id,
+                },
+                data: {
+                    total: totalRows,
+                    per_page: actualPageSize,
+                    page: page,
+                    last_page: lastPage,
+                    data: results
+                }
+            });
+        })
+        .catch((error) => {
+            res.status(500).json(error);
+        });
 });
 
 // Function to generate medical record number
