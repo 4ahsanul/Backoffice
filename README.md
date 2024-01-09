@@ -97,7 +97,7 @@ To get started with the project file, follow these steps:
    });
    module.exports = conn;
    ```
-4. Download the database that I use is [here]() or in the repository.
+4. Download the database that I use in the repository.
 5. Run nodemon.
    ```bash
    nodemon server.js
