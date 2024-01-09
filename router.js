@@ -657,7 +657,8 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
         subject_pre_assessment,
         object_pre_assessment,
         assessment_pre_assessment,
-        plan_pre_assessment
+        plan_pre_assessment,
+        assessment_date
     } = req.body;
 
     // Handle validation errors
@@ -671,7 +672,7 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
     // Insert the pre-assessment data into the database
     const pre_assessment_id = uuid.v4();
     db.query(
-        `INSERT INTO pre_assessment (id, patient_id, subject_pre_assessment) VALUES ('${pre_assessment_id}', '${jsonData.patient_id}', '${jsonData.subject_pre_assessment}')`,
+        `INSERT INTO pre_assessment (id, patient_id, subject_pre_assessment, object_pre_assessment, assessment_pre_assessment, plan_pre_assessment, assessment_date) VALUES ('${pre_assessment_id}', '${jsonData.patient_id}', '${jsonData.subject_pre_assessment}', '${jsonData.object_pre_assessment}', '${jsonData.assessment_pre_assessment}', '${jsonData.plan_pre_assessment}', '${jsonData.assessment_date}')`,
         (err, result) => {
             if (err) {
                 return res.status(500).json({
@@ -709,7 +710,8 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
                 subject_pre_assessment,
                 object_pre_assessment,
                 assessment_pre_assessment,
-                plan_pre_assessment
+                plan_pre_assessment,
+                assessment_date
             };
 
             return res.status(201).json({
@@ -916,6 +918,8 @@ router.get('/pre_assessment', (req, res,) => {
             res.status(500).json(error);
         });
 });
+
+// ===== END OF TRANSACTION PART =====
 
 // Function to generate medical record number
 function generateMedicalRecordNumber() {
