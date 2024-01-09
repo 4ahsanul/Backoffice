@@ -840,7 +840,7 @@ router.get('/pre_assessment', (req, res,) => {
         .then((results) => {
             // Count total rows in the table for pagination
             return new Promise((resolve, reject) => {
-                db.query(`SELECT pre_assessment.id, patient.patient_name, patient.patient_nik, pre_assessment.subject_pre_assessment, icd_tens.icd_tens_name_english 
+                db.query(`SELECT * 
                           FROM icd_tens_detail
                           JOIN pre_assessment ON pre_assessment.id = icd_tens_detail.pre_assessment_id
                           JOIN patient ON patient.id = pre_assessment.patient_id
@@ -884,7 +884,30 @@ router.get('/pre_assessment', (req, res,) => {
                     per_page: actualPageSize,
                     page: page,
                     last_page: lastPage,
-                    data: results
+                    data: results.map(result => ({
+                        pre_assessment_id: result.id,
+                        subject_pre_assessment: result.subject_pre_assessment,
+                        object_pre_assessment: result.object_pre_assessment,
+                        assessment_pre_assessment: result.assessment_pre_assessment,
+                        plan_pre_assessment: result.plan_pre_assessment,
+                        patient_details: {
+                            patient_id: result.patient_id,
+                            patient_medical_record_number: result.patient_medical_record_number,
+                            patient_name: result.patient_name,
+                            patient_birthdate: result.patient_birthdate,
+                            patient_nik: result.patient_nik,
+                        },
+                        icd_tens_details: [
+                            {
+                                icd_tens_id: result.icd_tens_id,
+                                icd_tens_name_english: result.icd_tens_name_english,
+                                icd_tens_name_bahasa: result.icd_tens_name_bahasa,
+                                icd_tens_code: result.icd_tens_code,
+                                icd_tens_type: result.icd_tens_type,
+                            }
+                            // Add more properties if needed
+                        ]
+                    }))
                 }
             });
         })
