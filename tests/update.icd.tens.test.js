@@ -3,13 +3,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 require('jsonwebtoken');
 require('uuid');
-const router = require('../router'); // Update this with the correct path to your router file
+const router = require('../router');
 const app = express();
 
 app.use(bodyParser.json());
 app.use('/', router);
 
 describe('ICD Tens Update API Tests', () => {
+    // Change to valid token
     const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImI1NmQ1MWFkLTc2MjgtNDAyOS1hZWY3LTU0MTAzYTQ1YjlhZSIsImlhdCI6MTcwNDc4Njg0NCwiZXhwIjoxNzA0NzkwNDQ0fQ.F0tUkXAF46sAS-7pNyOuYdsJ2v93ZmtkgJI2xRxrkpo';
 
     test('should update an existing ICD Tens with valid token and data', async () => {

@@ -1,7 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 const bodyParser = require('body-parser');
-const router = require('../router'); // Update this with the correct path to your router file
+const router = require('../router');
 const app = express();
 
 app.use(bodyParser.json());
@@ -9,6 +9,7 @@ app.use('/', router);
 
 describe('Authentication API Tests', () => {
     test('should register a new user', async () => {
+        // Change to new username and password if it's already in
         const response = await request(app)
             .post('/register')
             .send({

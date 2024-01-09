@@ -10,11 +10,11 @@ app.use(bodyParser.json());
 app.use('/', router);
 
 describe('Patient Update API Tests', () => {
+    // Change to valid token
     const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImI1NmQ1MWFkLTc2MjgtNDAyOS1hZWY3LTU0MTAzYTQ1YjlhZSIsImlhdCI6MTcwNDc4OTMwOSwiZXhwIjoxNzA0NzkyOTA5fQ.-zexmHZDceHfFsRLMmIyUhP0mWRdDKTeGo1DJ44l4JM';
 
     test('should update an existing patient with valid token and data', async () => {
-        // Assuming you have an existing patient in your database
-        const existingPatientId = '30aee0af-4a36-44bb-825f-b29edfbf288d';
+        const existingPatientId = '30aee0af-4a36-44bb-825f-b29edfbf288d'; // Replace with a real Patient ID
 
         const response = await request(app)
             .put(`/patient/${existingPatientId}`)

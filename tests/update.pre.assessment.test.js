@@ -10,7 +10,9 @@ app.use(bodyParser.json());
 app.use('/', router);
 
 describe('Update Pre-Assessment API Test', () => {
+    // Change to valid token
     const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImI1NmQ1MWFkLTc2MjgtNDAyOS1hZWY3LTU0MTAzYTQ1YjlhZSIsImlhdCI6MTcwNDc5MTUwOSwiZXhwIjoxNzA0Nzk1MTA5fQ.rVBz-n7wwpEFi5pg5w3_ybAQNvd1J-tBKEGdPNQHPqs';
+    // Change to Assessment ID
     const preAssessmentIdToUpdate = '1';
 
     test(`should update a pre-assessment with valid data and token`, async () => {
