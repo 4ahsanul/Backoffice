@@ -1,7 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('./dbConnection');
-const {registerValidation, loginValidation, insertICDValidation, ICDValidation, patientValidation} = require('./validation');
+const {
+    registerValidation,
+    loginValidation,
+    insertICDValidation,
+    ICDValidation,
+    patientValidation,
+    assessmentValidation
+} = require('./validation');
 const {validationResult} = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -304,7 +311,7 @@ router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
 
 // LIST ICD TENS
 router.get('/icd', (req, res,) => {
-    const { page = 1 } = req.query;
+    const {page = 1} = req.query;
     const limit = 10;
     const offset = (page - 1) * limit;
 
@@ -333,7 +340,7 @@ router.get('/icd', (req, res,) => {
     new Promise((resolve, reject) => {
         db.query('SELECT * FROM icd_tens LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
             if (error) {
-                reject({ error: true, message: 'Error fetching data' });
+                reject({error: true, message: 'Error fetching data'});
             } else {
                 resolve(results);
             }
@@ -344,14 +351,14 @@ router.get('/icd', (req, res,) => {
             return new Promise((resolve, reject) => {
                 db.query('SELECT COUNT(*) AS total_rows FROM icd_tens', (countError, countResults) => {
                     if (countError) {
-                        reject({ error: true, message: 'Error fetching count' });
+                        reject({error: true, message: 'Error fetching count'});
                     } else {
-                        resolve({ results, countResults });
+                        resolve({results, countResults});
                     }
                 });
             });
         })
-        .then(({ results, countResults }) => {
+        .then(({results, countResults}) => {
             const totalRows = countResults[0].total_rows;
             const lastPage = Math.ceil(totalRows / limit);
             const actualPageSize = results.length;
@@ -484,7 +491,7 @@ router.put('/patient/:patientId', patientValidation, (req, res) => {
     }
 
     // If the token is valid, you can proceed with the ICD data validation and update
-    const patientId  = req.params.patientId; // Extract ICD ID from the URL parameter
+    const patientId = req.params.patientId; // Extract ICD ID from the URL parameter
     const jsonData = req.body;
 
     // Patient data validation
@@ -534,7 +541,7 @@ router.put('/patient/:patientId', patientValidation, (req, res) => {
 
 // LIST PATIENT
 router.get('/patient', (req, res) => {
-    const { page = 1 } = req.query;
+    const {page = 1} = req.query;
     const limit = 10;
     const offset = (page - 1) * limit;
 
@@ -563,7 +570,7 @@ router.get('/patient', (req, res) => {
     new Promise((resolve, reject) => {
         db.query('SELECT * FROM patient LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
             if (error) {
-                reject({ error: true, message: 'Error fetching data' });
+                reject({error: true, message: 'Error fetching data'});
             } else {
                 resolve(results);
             }
@@ -574,14 +581,14 @@ router.get('/patient', (req, res) => {
             return new Promise((resolve, reject) => {
                 db.query('SELECT COUNT(*) AS total_rows FROM patient', (countError, countResults) => {
                     if (countError) {
-                        reject({ error: true, message: 'Error fetching count' });
+                        reject({error: true, message: 'Error fetching count'});
                     } else {
-                        resolve({ results, countResults });
+                        resolve({results, countResults});
                     }
                 });
             });
         })
-        .then(({ results, countResults }) => {
+        .then(({results, countResults}) => {
             const totalRows = countResults[0].total_rows;
             const lastPage = Math.ceil(totalRows / limit);
             const actualPageSize = results.length;
@@ -611,6 +618,111 @@ router.get('/patient', (req, res) => {
         .catch((error) => {
             res.status(500).json(error);
         });
+})
+// ===== END OF DATA PATIENT PART AND MASTER DATA =====
+
+// ===== TRANSACTION =====
+router.post('/pre_assessment', assessmentValidation, (req, res) => {
+    // Check for the presence of a valid token in the headers
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    // If the token is valid, you can proceed with the pre-assessment data validation and insertion
+    const id = uuid.v4();
+    const jsonData = req.body;
+    console.log('Received JSON:', jsonData);
+
+    // Pre-assessment data validation
+    const {
+        patient_id,
+        icd_tens_id,
+        subject_pre_assessment,
+        object_pre_assessment,
+        assessment_pre_assessment,
+        plan_pre_assessment
+    } = req.body;
+
+    // Handle validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({
+            errors: errors.array()
+        });
+    }
+
+    // Insert the pre-assessment data into the database
+    const pre_assessment_id = uuid.v4();
+    db.query(
+        `INSERT INTO pre_assessment (id, patient_id, subject_pre_assessment) VALUES ('${pre_assessment_id}', '${jsonData.patient_id}', '${jsonData.subject_pre_assessment}')`,
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({
+                    header: {
+                        status: 'FAILED',
+                        message: 'Error registering Pre-Assessment',
+                        status_code: 500,
+                        error_code: err.code || null,
+                    },
+                    data: null,
+                });
+            }
+
+            // Process each JSON object in the array
+            for (const jsonObject of jsonData.icd_tens_id) {
+                // Perform actions on each jsonObject
+                //console.log('Processing JSON:', jsonObject);
+                // Add your logic here
+                const icd_tens_detail_id = uuid.v4();
+                db.query(
+                    `INSERT INTO icd_tens_detail (id, pre_assessment_id, icd_tens_id) VALUES ('${icd_tens_detail_id}', '${pre_assessment_id}', '${jsonObject}')`
+                );
+            }
+
+            // Insert user log to trace
+            db.query(
+                `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'insert_pre_assessment')`
+            );
+
+
+            const insertedPreAssessment = {
+                 pre_assessment_id: pre_assessment_id,
+                 patient_id,
+                 icd_tens_id,
+                 subject_pre_assessment,
+                 object_pre_assessment,
+                 assessment_pre_assessment,
+                 plan_pre_assessment
+             };
+
+            return res.status(201).json({
+                header: {
+                    status: 'OK',
+                    message: 'Pre-Assessment has been registered successfully!',
+                    status_code: 201,
+                    error_code: null,
+                    trace_id: id,
+                },
+                data: insertedPreAssessment,
+            });
+        }
+    );
 })
 
 

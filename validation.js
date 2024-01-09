@@ -22,3 +22,10 @@ exports.patientValidation = [
     check('patient_birthdate', 'Patient Birthdate is required').not().isEmpty().isDate(),
     check('patient_nik','Patient NIK is required').not().isEmpty().isString()
 ]
+
+exports.assessmentValidation = [
+    check('subject_pre_assessment', 'Subject Pre-Assessment is required').not().isEmpty().isString(),
+    check('object_pre_assessment', 'Object Pre-Assessment is required').not().isEmpty().isString(),
+    check('assessment_pre_assessment', 'Assessment Pre-Assessment is required').not().isEmpty().isString(),
+    check('plan_pre_assessment', 'Plan Pre-Assessment is required').not().isEmpty().isString(),
+]
