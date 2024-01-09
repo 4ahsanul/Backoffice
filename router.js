@@ -307,7 +307,7 @@ router.put('/icd/:icdId', ICDValidation, (req, res, next) => {
             });
         }
     )
-})
+});
 
 // LIST ICD TENS
 router.get('/icd', (req, res,) => {
@@ -388,7 +388,7 @@ router.get('/icd', (req, res,) => {
         .catch((error) => {
             res.status(500).json(error);
         });
-})
+});
 // ===== END OF DATA ICD PART =====
 
 // INSERT PATIENT
@@ -537,7 +537,7 @@ router.put('/patient/:patientId', patientValidation, (req, res) => {
             });
         }
     )
-})
+});
 
 // LIST PATIENT
 router.get('/patient', (req, res) => {
@@ -618,10 +618,11 @@ router.get('/patient', (req, res) => {
         .catch((error) => {
             res.status(500).json(error);
         });
-})
+});
 // ===== END OF DATA PATIENT PART AND MASTER DATA =====
 
 // ===== TRANSACTION =====
+// INSERT PRE-ASSESSMENT
 router.post('/pre_assessment', assessmentValidation, (req, res) => {
     // Check for the presence of a valid token in the headers
     if (
@@ -723,8 +724,124 @@ router.post('/pre_assessment', assessmentValidation, (req, res) => {
             });
         }
     );
-})
+});
 
+// UPDATE PRE-ASSESSMENT
+router.put('/update_pre_assessment/:pre_assessment_id', assessmentValidation, (req, res) => {
+    // Check for the presence of a valid token in the headers
+    if (
+        !req.headers.authorization ||
+        !req.headers.authorization.startsWith('Bearer') ||
+        !req.headers.authorization.split(' ')[1]
+    ) {
+        return res.status(422).json({
+            msg: "Please provide the token"
+        });
+    }
+
+    const theToken = req.headers.authorization.split(' ')[1];
+    let decoded;
+    try {
+        decoded = jwt.verify(theToken, 'the-super-strong-secret');
+    } catch (err) {
+        return res.status(401).json({
+            msg: "Invalid token"
+        });
+    }
+
+    // If the token is valid, you can proceed with the pre-assessment data validation and update
+    const preAssessmentId = req.params.pre_assessment_id;
+    const jsonData = req.body;
+    console.log('Received JSON:', jsonData);
+
+    // Pre-assessment data validation
+    const {
+        patient_id,
+        icd_tens_id,
+        subject_pre_assessment,
+        object_pre_assessment,
+        assessment_pre_assessment,
+        plan_pre_assessment
+    } = req.body;
+
+    // Handle validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({
+            errors: errors.array()
+        });
+    }
+
+    db.query(
+        `UPDATE pre_assessment SET patient_id='${jsonData.patient_id}', subject_pre_assessment='${jsonData.subject_pre_assessment}' WHERE id='${preAssessmentId}'`,
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({
+                    header: {
+                        status: 'FAILED',
+                        message: 'Error updating Pre-Assessment',
+                        status_code: 500,
+                        error_code: err.code || null,
+                    },
+                    data: null,
+                });
+            }
+
+            db.query(
+                `DELETE FROM icd_tens_detail WHERE pre_assessment_id='${preAssessmentId}'`,
+                (deleteErr, deleteResult) => {
+                    if (deleteErr) {
+                        // Handle deletion error
+                        return res.status(500).json({
+                            header: {
+                                status: 'FAILED',
+                                message: 'Error updating Pre-Assessment',
+                                status_code: 500,
+                                error_code: deleteErr.code || null,
+                            },
+                            data: null,
+                        });
+                    }
+
+                    // Process each JSON object in the array and insert new icd_tens_detail records
+                    for (const jsonObject of jsonData.icd_tens_id) {
+                        const icd_tens_detail_id = uuid.v4();
+                        db.query(
+                            `INSERT INTO icd_tens_detail (id, pre_assessment_id, icd_tens_id) VALUES ('${icd_tens_detail_id}', '${preAssessmentId}', '${jsonObject}')`
+                        );
+                    }
+
+                    // Insert user log to trace
+                    const id = uuid.v4();
+                    db.query(
+                        `INSERT INTO trace (id, user_id, token, log_time, action) VALUES ('${id}', '${decoded.id}', '${theToken}', NOW(), 'update_pre_assessment')`
+                    );
+
+                    const updatedPreAssessment = {
+                        pre_assessment_id: preAssessmentId,
+                        patient_id,
+                        icd_tens_id,
+                        subject_pre_assessment,
+                        object_pre_assessment,
+                        assessment_pre_assessment,
+                        plan_pre_assessment
+                    };
+
+                    return res.status(200).json({
+                        header: {
+                            status: 'OK',
+                            message: 'Pre-Assessment has been updated successfully!',
+                            status_code: 200,
+                            error_code: null,
+                            trace_id: id,
+                        },
+                        data: updatedPreAssessment,
+                    });
+                }
+            );
+        }
+    );
+});
 
 // Function to generate medical record number
 function generateMedicalRecordNumber() {
